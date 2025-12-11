@@ -8071,8 +8071,6 @@ class TestDeltaDaft:
         ray.stop()
         ray.init(
             num_cpus=2,
-            object_store_memory=500_000_000,  # 500MB
-            _memory=1_000_000_000,  # 1GB total
             ignore_reinit_error=True
         )
         daft.set_runner_ray(noop_if_initialized=True)
