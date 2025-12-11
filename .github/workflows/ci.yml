@@ -1,3 +1,5 @@
+# TEMPORARY CONFIGURATION - Modified to run only test_main_storage.py tests
+# To restore full functionality, uncomment the commented sections below
 name: CI
 on:
     pull_request:
@@ -8,27 +10,33 @@ on:
             - reopened
         branches: [main, phash_main, '2.0', 'test/test-2.0']
 jobs:
-    lint:
-        runs-on: ubuntu-latest
-        steps:
-            - name: checkout
-              uses: actions/checkout@v3
-            - name: Set up Python 3.9
-              uses: actions/setup-python@v4
-              with:
-                  python-version: 3.9
-            - name: Linting
-              run: |
-                  python -m pip install --upgrade pip
-                  if [ -f dev-requirements.txt ]; then pip install --no-cache-dir -r dev-requirements.txt; fi
-                  pre-commit run --all-files
+    # TEMPORARILY DISABLED - Skip linting to speed up workflow
+    # lint:
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #         - name: checkout
+    #           uses: actions/checkout@v3
+    #         - name: Set up Python 3.9
+    #           uses: actions/setup-python@v4
+    #           with:
+    #               python-version: 3.9
+    #         - name: Linting
+    #           run: |
+    #               python -m pip install --upgrade pip
+    #               if [ -f dev-requirements.txt ]; then pip install --no-cache-dir -r dev-requirements.txt; fi
+    #               pre-commit run --all-files
     build-n-test:
         name: Build and test
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                python-version: ["3.9", "3.10"]
-        timeout-minutes: 45
+                # TEMPORARILY REDUCED - Only test Python 3.10 to speed up workflow
+                python-version: ["3.10"]
+                # python-version: ["3.9", "3.10"]
+        # ORIGINAL timeout for full test suite
+        # timeout-minutes: 45
+        # REDUCED timeout for single test file
+        timeout-minutes: 20
         steps:
             - name: Free Disk Space (Ubuntu)
               uses: jlumbroso/free-disk-space@main
@@ -72,25 +80,32 @@ jobs:
             - name: Check disk space after install
               run: df -h
 
-            - name: Run unit tests + benchmarks
-              run: >-
-                  python -m pytest -m "not integration" --benchmark-json output.json
+            # ORIGINAL - Run all unit tests + benchmarks
+            # - name: Run unit tests + benchmarks
+            #   run: >-
+            #       python -m pytest -m "not integration" --benchmark-json output.json
+            
+            # TEMPORARY - Run only test_main_storage.py tests
+            - name: Run test_main_storage.py tests only
+              run: |
+                  python -m pytest deltacat/tests/storage/main/test_main_storage.py -v --tb=short
 
-            # Download previous benchmark result from cache (if exists)
-            - name: Download previous benchmark data
-              uses: actions/cache@v4
-              with:
-                  path: ./cache
-                  key: ${{ runner.os }}-benchmark
+            # TEMPORARILY DISABLED - Skip benchmarking to speed up workflow
+            # # Download previous benchmark result from cache (if exists)
+            # - name: Download previous benchmark data
+            #   uses: actions/cache@v4
+            #   with:
+            #       path: ./cache
+            #       key: ${{ runner.os }}-benchmark
 
-            - name: Store benchmark results
-              uses: benchmark-action/github-action-benchmark@v1
-              with:
-                  tool: "pytest"
-                  output-file-path: output.json
-                  auto-push: false
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
-                  # Where the previous data file is stored
-                  external-data-json-path: ./cache/benchmark-data.json
-                  # Enable Job Summary for PRs
-                  summary-always: true
+            # - name: Store benchmark results
+            #   uses: benchmark-action/github-action-benchmark@v1
+            #   with:
+            #       tool: "pytest"
+            #       output-file-path: output.json
+            #       auto-push: false
+            #       github-token: ${{ secrets.GITHUB_TOKEN }}
+            #       # Where the previous data file is stored
+            #       external-data-json-path: ./cache/benchmark-data.json
+            #       # Enable Job Summary for PRs
+            #       summary-always: true

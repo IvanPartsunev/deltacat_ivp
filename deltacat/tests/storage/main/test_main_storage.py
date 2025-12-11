@@ -7868,85 +7868,20 @@ class TestDelta:
 
 class TestDistDeltaDaft:
 
-    # @classmethod
-    # def setup_method(cls):
-    #     cls.tmpdir = tempfile.mkdtemp()
-    #     cls.catalog = CatalogProperties(root=cls.tmpdir)
-    #     from daft import daft
-    #     daft.set_runner_ray()
-    #
-    #     # Create and commit namespace
-    #     cls.namespace = create_test_namespace()
-    #     metastore.create_namespace(
-    #         namespace=cls.namespace.locator.namespace,
-    #         catalog=cls.catalog,
-    #     )
-    #
-    #     # Create a schema for the table version
-    #     arrow_schema = pa.schema(
-    #         [
-    #             ("id", pa.int64()),
-    #             ("name", pa.string()),
-    #             ("age", pa.int64()),
-    #             ("city", pa.string()),
-    #         ]
-    #     )
-    #     schema = Schema.of(
-    #         schema=arrow_schema,
-    #         schema_id=1,
-    #     )
-    #
-    #     # Create and commit table version with schema
-    #     cls.table, cls.table_version, cls.stream = metastore.create_table_version(
-    #         namespace=cls.namespace.locator.namespace,
-    #         table_name="test_table",
-    #         table_version="v.1",
-    #         schema=schema,
-    #         catalog=cls.catalog,
-    #     )
-    #
-    #     # Make the table version active
-    #     metastore.update_table_version(
-    #         namespace=cls.namespace.locator.namespace,
-    #         table_name="test_table",
-    #         table_version="v.1",
-    #         lifecycle_state=LifecycleState.ACTIVE,
-    #         catalog=cls.catalog,
-    #     )
-    #
-    #     # Stage and commit partition
-    #     cls.partition = metastore.stage_partition(
-    #         stream=cls.stream,
-    #         catalog=cls.catalog,
-    #     )
-    #     cls.partition = metastore.commit_partition(
-    #         partition=cls.partition,
-    #         catalog=cls.catalog,
-    #     )
-    #     # Get the committed partition to ensure we have the latest state
-    #     cls.partition = metastore.get_partition_by_id(
-    #         stream_locator=cls.partition.stream_locator,
-    #         partition_id=cls.partition.partition_id,
-    #         catalog=cls.catalog,
-    #     )
-    #
-    # @classmethod
-    # def teardown_method(cls):
-    #     shutil.rmtree(cls.tmpdir)
-
-    def test_download_delta_distributed_daft_basic(self):
-        """Test basic distributed download with DAFT dataset type."""
-
-        tmpdir = tempfile.mkdtemp()
-        catalog = CatalogProperties(root=tmpdir)
+    @classmethod
+    def setup_method(cls):
+        import ray
         from daft import daft
-        daft.set_runner_ray()
+        ray.init(num_cpus=4, num_gpus=0)
+        daft.set_runner_ray(noop_if_initialized=True)
+        cls.tmpdir = tempfile.mkdtemp()
+        cls.catalog = CatalogProperties(root=cls.tmpdir)
 
         # Create and commit namespace
-        namespace = create_test_namespace()
+        cls.namespace = create_test_namespace()
         metastore.create_namespace(
-            namespace=namespace.locator.namespace,
-            catalog=catalog,
+            namespace=cls.namespace.locator.namespace,
+            catalog=cls.catalog,
         )
 
         # Create a schema for the table version
@@ -7964,38 +7899,46 @@ class TestDistDeltaDaft:
         )
 
         # Create and commit table version with schema
-        table, table_version, stream = metastore.create_table_version(
-            namespace=namespace.locator.namespace,
-            table_name="test_table",
+        cls.table, cls.table_version, cls.stream = metastore.create_table_version(
+            namespace=cls.namespace.locator.namespace,
+            table_name="test_table_dist",
             table_version="v.1",
             schema=schema,
-            catalog=catalog,
+            catalog=cls.catalog,
         )
 
         # Make the table version active
         metastore.update_table_version(
-            namespace=namespace.locator.namespace,
-            table_name="test_table",
+            namespace=cls.namespace.locator.namespace,
+            table_name="test_table_dist",
             table_version="v.1",
             lifecycle_state=LifecycleState.ACTIVE,
-            catalog=catalog,
+            catalog=cls.catalog,
         )
 
         # Stage and commit partition
-        partition = metastore.stage_partition(
-            stream=stream,
-            catalog=catalog,
+        cls.partition = metastore.stage_partition(
+            stream=cls.stream,
+            catalog=cls.catalog,
         )
-        partition = metastore.commit_partition(
-            partition=partition,
-            catalog=catalog,
+        cls.partition = metastore.commit_partition(
+            partition=cls.partition,
+            catalog=cls.catalog,
         )
         # Get the committed partition to ensure we have the latest state
-        partition = metastore.get_partition_by_id(
-            stream_locator=partition.stream_locator,
-            partition_id=partition.partition_id,
-            catalog=catalog,
+        cls.partition = metastore.get_partition_by_id(
+            stream_locator=cls.partition.stream_locator,
+            partition_id=cls.partition.partition_id,
+            catalog=cls.catalog,
         )
+
+    @classmethod
+    def teardown_method(cls):
+        shutil.rmtree(cls.tmpdir)
+        ray.shutdown()
+
+    def test_download_delta_distributed_daft_basic(self):
+        """Test basic distributed download with DAFT dataset type."""
 
         # Create test data
         test_data = pd.DataFrame(
@@ -8015,15 +7958,15 @@ class TestDistDeltaDaft:
 
         staged_delta = metastore.stage_delta(
             data=test_data,
-            partition=partition,
-            catalog=catalog,
+            partition=self.partition,
+            catalog=self.catalog,
             content_type=ContentType.PARQUET,
             delta_type=DeltaType.UPSERT,
         )
 
         committed_delta = metastore.commit_delta(
             delta=staged_delta,
-            catalog=catalog,
+            catalog=self.catalog,
         )
 
         # Download using DAFT distributed dataset type
@@ -8032,7 +7975,7 @@ class TestDistDeltaDaft:
             table_type=DatasetType.PYARROW,
             storage_type=StorageType.DISTRIBUTED,
             distributed_dataset_type=DistributedDatasetType.DAFT,
-            catalog=catalog,
+            catalog=self.catalog,
         )
 
         # Verify the result is a DAFT DataFrame
@@ -8049,7 +7992,6 @@ class TestDistDeltaDaft:
             expected_df.columns
         ), "Column names mismatch"
         pd.testing.assert_frame_equal(downloaded_df, expected_df)
-        shutil.rmtree(tmpdir)
 
     def test_download_delta_distributed_daft_with_delta_locator(self):
         """Test DAFT distributed download using DeltaLocator instead of Delta object."""
