@@ -7871,9 +7871,11 @@ class TestDistDeltaDaft:
     @classmethod
     def setup_method(cls):
         import ray
+        from daft import daft
 
         ray.shutdown()
-        ray.init(num_cpus=4, num_gpus=0, ignore_reinit_error=True)
+        ray.init(num_cpus=4)
+        daft.set_runner_ray()
 
         cls.tmpdir = tempfile.mkdtemp()
         cls.catalog = CatalogProperties(root=cls.tmpdir)
