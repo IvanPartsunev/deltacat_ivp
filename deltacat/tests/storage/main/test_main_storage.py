@@ -8063,12 +8063,19 @@ class TestDeltaDaft:
     @classmethod
     def setup_method(cls):
 
-        from daft import daft
-
-        daft.set_runner_ray(noop_if_initialized=True)
-
         cls.tmpdir = tempfile.mkdtemp()
         cls.catalog = CatalogProperties(root=cls.tmpdir)
+
+        from daft import daft
+        import ray
+        ray.stop()
+        ray.init(
+            num_cpus=2,
+            object_store_memory=500_000_000,  # 500MB
+            _memory=1_000_000_000,  # 1GB total
+            ignore_reinit_error=True
+        )
+        daft.set_runner_ray(noop_if_initialized=True)
 
         # Create and commit namespace
         cls.namespace = create_test_namespace()
@@ -8094,7 +8101,7 @@ class TestDeltaDaft:
         # Create and commit table version with schema
         cls.table, cls.table_version, cls.stream = metastore.create_table_version(
             namespace=cls.namespace.locator.namespace,
-            table_name="test_table",
+            table_name="test_table_dist",
             table_version="v.1",
             schema=schema,
             catalog=cls.catalog,
@@ -8103,7 +8110,7 @@ class TestDeltaDaft:
         # Make the table version active
         metastore.update_table_version(
             namespace=cls.namespace.locator.namespace,
-            table_name="test_table",
+            table_name="test_table_dist",
             table_version="v.1",
             lifecycle_state=LifecycleState.ACTIVE,
             catalog=cls.catalog,
