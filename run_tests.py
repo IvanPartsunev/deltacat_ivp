@@ -17,7 +17,7 @@ def run_command(cmd, description):
     print(f"{description}")
     print(f"Command: {' '.join(cmd)}")
     print(f"{'='*60}")
-    
+
     try:
         result = subprocess.run(cmd, text=True)
         return result.returncode == 0
@@ -31,51 +31,51 @@ def main():
     parser.add_argument(
         "test_type",
         choices=[
-            "unit", 
-            "integration", 
-            "distributed_daft", 
-            "failing_daft", 
-            "ci", 
+            "unit",
+            "integration",
+            "distributed_daft",
+            "failing_daft",
+            "ci",
             "all"
         ],
         help="Type of tests to run"
     )
     parser.add_argument(
-        "-v", "--verbose", 
-        action="store_true", 
+        "-v", "--verbose",
+        action="store_true",
         help="Verbose output"
     )
     parser.add_argument(
-        "--tb", 
+        "--tb",
         choices=["short", "long", "line", "native", "no"],
         default="short",
         help="Traceback format"
     )
-    
+
     args = parser.parse_args()
-    
+
     base_cmd = [sys.executable, "-m", "pytest"]
     if args.verbose:
         base_cmd.append("-v")
     base_cmd.extend(["--tb", args.tb])
-    
+
     if args.test_type == "unit":
         cmd = base_cmd + ["-m", "not distributed_daft"]
         description = "Running unit and integration tests (excluding distributed_daft)"
-        
+
     elif args.test_type == "integration":
         cmd = base_cmd + ["-m", "integration"]
         description = "Running integration tests (including non-distributed_daft integration tests)"
-        
+
     elif args.test_type == "distributed_daft":
         cmd = base_cmd + ["-m", "distributed_daft"]
         description = "Running distributed Daft tests (these WILL fail due to runner conflicts when run together)"
-        
+
     elif args.test_type == "failing_daft":
         # Specific failing tests mentioned in the issue
         failing_tests = [
             "deltacat/tests/storage/main/test_main_storage.py::TestDelta::test_download_delta_distributed_daft_basic",
-            "deltacat/tests/storage/main/test_main_storage.py::TestDelta::test_download_delta_distributed_daft_with_delta_locator", 
+            "deltacat/tests/storage/main/test_main_storage.py::TestDelta::test_download_delta_distributed_daft_with_delta_locator",
             "deltacat/tests/storage/main/test_main_storage.py::TestDelta::test_download_delta_distributed_daft_vs_ray_consistency",
             "deltacat/tests/utils/test_daft.py::TestFilesToDataFrame::test_accepts_custom_kwargs",
             "deltacat/tests/utils/test_daft.py::TestFilesToDataFrame::test_accepts_io_config",
@@ -88,17 +88,17 @@ def main():
         ]
         cmd = base_cmd + failing_tests
         description = "Running specific failing distributed Daft tests (WILL show runner conflict errors)"
-        
+
     elif args.test_type == "ci":
         cmd = base_cmd + ["-m", "not distributed_daft", "--benchmark-json", "output.json"]
         description = "Running CI tests (same as GitHub Actions)"
-        
+
     elif args.test_type == "all":
         cmd = base_cmd
         description = "Running all tests (including distributed_daft - WILL fail due to runner conflicts)"
-    
+
     success = run_command(cmd, description)
-    
+
     if args.test_type == "distributed_daft" or args.test_type == "failing_daft" or args.test_type == "all":
         print(f"\n{'='*60}")
         print("EXPECTED BEHAVIOR:")
@@ -118,7 +118,7 @@ def main():
         print("  python -m pytest deltacat/tests/utils/test_daft.py::TestFilesToDataFrame -v")
         print("- Use: ./test_individual_daft.sh")
         print(f"{'='*60}")
-    
+
     return success
 
 
