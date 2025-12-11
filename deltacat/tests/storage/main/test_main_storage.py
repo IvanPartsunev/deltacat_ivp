@@ -7872,7 +7872,8 @@ class TestDistDeltaDaft:
     def setup_method(cls):
         import ray
         from daft import daft
-        ray.init(num_cpus=4, num_gpus=0)
+        ray.shutdown()
+        ray.init(num_cpus=4, num_gpus=0, ignore_reinit_error=True)
         daft.set_runner_ray(noop_if_initialized=True)
         cls.tmpdir = tempfile.mkdtemp()
         cls.catalog = CatalogProperties(root=cls.tmpdir)
