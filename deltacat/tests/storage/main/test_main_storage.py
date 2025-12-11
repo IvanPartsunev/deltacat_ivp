@@ -8064,6 +8064,7 @@ class TestDeltaDaft:
     def setup_method(cls):
 
         from daft import daft
+
         daft.set_runner_ray(noop_if_initialized=True)
 
         cls.tmpdir = tempfile.mkdtemp()

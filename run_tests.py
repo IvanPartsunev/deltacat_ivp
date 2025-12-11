@@ -36,20 +36,16 @@ def main():
             "distributed_daft",
             "failing_daft",
             "ci",
-            "all"
+            "all",
         ],
-        help="Type of tests to run"
+        help="Type of tests to run",
     )
-    parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Verbose output"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser.add_argument(
         "--tb",
         choices=["short", "long", "line", "native", "no"],
         default="short",
-        help="Traceback format"
+        help="Traceback format",
     )
 
     args = parser.parse_args()
@@ -84,13 +80,18 @@ def main():
             "deltacat/tests/utils/test_daft.py::TestFilesToDataFrame::test_read_local_files_with_column_selection",
             "deltacat/tests/utils/test_daft.py::TestFilesToDataFrame::test_supports_gzip_content_encoding",
             "deltacat/tests/utils/test_daft.py::TestFilesToDataFrame::test_supports_unescaped_tsv_content_type",
-            "deltacat/tests/experimental/converter_agent/test_table_monitor.py::TestTableMonitorEndToEnd::test_table_monitor_with_shared_catalog"
+            "deltacat/tests/experimental/converter_agent/test_table_monitor.py::TestTableMonitorEndToEnd::test_table_monitor_with_shared_catalog",
         ]
         cmd = base_cmd + failing_tests
         description = "Running specific failing distributed Daft tests (WILL show runner conflict errors)"
 
     elif args.test_type == "ci":
-        cmd = base_cmd + ["-m", "not distributed_daft", "--benchmark-json", "output.json"]
+        cmd = base_cmd + [
+            "-m",
+            "not distributed_daft",
+            "--benchmark-json",
+            "output.json",
+        ]
         description = "Running CI tests (same as GitHub Actions)"
 
     elif args.test_type == "all":
@@ -99,7 +100,11 @@ def main():
 
     success = run_command(cmd, description)
 
-    if args.test_type == "distributed_daft" or args.test_type == "failing_daft" or args.test_type == "all":
+    if (
+        args.test_type == "distributed_daft"
+        or args.test_type == "failing_daft"
+        or args.test_type == "all"
+    ):
         print(f"\n{'='*60}")
         print("EXPECTED BEHAVIOR:")
         print("- These tests WILL fail when run together due to Daft runner conflicts")
@@ -114,8 +119,12 @@ def main():
         print("")
         print("FOR INDIVIDUAL TESTING (should work):")
         print("- Run each test file separately:")
-        print("  python -m pytest deltacat/tests/storage/main/test_main_storage.py -k distributed_daft -v")
-        print("  python -m pytest deltacat/tests/utils/test_daft.py::TestFilesToDataFrame -v")
+        print(
+            "  python -m pytest deltacat/tests/storage/main/test_main_storage.py -k distributed_daft -v"
+        )
+        print(
+            "  python -m pytest deltacat/tests/utils/test_daft.py::TestFilesToDataFrame -v"
+        )
         print("- Use: ./test_individual_daft.sh")
         print(f"{'='*60}")
 
