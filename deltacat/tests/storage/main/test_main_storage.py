@@ -7870,12 +7870,8 @@ class TestDistDeltaDaft:
 
     @classmethod
     def setup_method(cls):
-        import ray
-        from daft import daft
-
-        ray.shutdown()
-        ray.init(num_cpus=4)
-        daft.set_runner_ray()
+        from daft.runners import flotilla
+        flotilla.FLOTILLA_RUNNER_NAMESPACE = f'daft-job-{uuid.uuid4()}'
 
         cls.tmpdir = tempfile.mkdtemp()
         cls.catalog = CatalogProperties(root=cls.tmpdir)
@@ -7943,15 +7939,15 @@ class TestDistDeltaDaft:
     def test_download_delta_distributed_daft_basic(self):
         """Test basic distributed download with DAFT dataset type."""
 
-        # Create a fresh partition for this test
-        test_partition = metastore.stage_partition(
-            stream=self.stream,
-            catalog=self.catalog,
-        )
-        test_partition = metastore.commit_partition(
-            partition=test_partition,
-            catalog=self.catalog,
-        )
+        # # Create a fresh partition for this test
+        # test_partition = metastore.stage_partition(
+        #     stream=self.stream,
+        #     catalog=self.catalog,
+        # )
+        # test_partition = metastore.commit_partition(
+        #     partition=test_partition,
+        #     catalog=self.catalog,
+        # )
 
         # Create test data
         test_data = pd.DataFrame(
@@ -7971,7 +7967,8 @@ class TestDistDeltaDaft:
 
         staged_delta = metastore.stage_delta(
             data=test_data,
-            partition=test_partition,
+            partition=self.partition,
+            # partition=test_partition,
             catalog=self.catalog,
             content_type=ContentType.PARQUET,
             delta_type=DeltaType.UPSERT,
@@ -8009,15 +8006,15 @@ class TestDistDeltaDaft:
     def test_download_delta_distributed_daft_with_delta_locator(self):
         """Test DAFT distributed download using DeltaLocator instead of Delta object."""
 
-        # Create a fresh partition for this test
-        test_partition = metastore.stage_partition(
-            stream=self.stream,
-            catalog=self.catalog,
-        )
-        test_partition = metastore.commit_partition(
-            partition=test_partition,
-            catalog=self.catalog,
-        )
+        # # Create a fresh partition for this test
+        # test_partition = metastore.stage_partition(
+        #     stream=self.stream,
+        #     catalog=self.catalog,
+        # )
+        # test_partition = metastore.commit_partition(
+        #     partition=test_partition,
+        #     catalog=self.catalog,
+        # )
 
         test_data = pd.DataFrame(
             {
@@ -8030,7 +8027,8 @@ class TestDistDeltaDaft:
 
         staged_delta = metastore.stage_delta(
             data=test_data,
-            partition=test_partition,
+            partition=self.partition,
+            # partition=test_partition,
             content_type=ContentType.PARQUET,
             delta_type=DeltaType.UPSERT,
             catalog=self.catalog,
@@ -8059,14 +8057,14 @@ class TestDistDeltaDaft:
         """Test that DAFT and Ray distributed downloads return the same data."""
 
         # Create a fresh partition for this test
-        test_partition = metastore.stage_partition(
-            stream=self.stream,
-            catalog=self.catalog,
-        )
-        test_partition = metastore.commit_partition(
-            partition=test_partition,
-            catalog=self.catalog,
-        )
+        # test_partition = metastore.stage_partition(
+        #     stream=self.stream,
+        #     catalog=self.catalog,
+        # )
+        # test_partition = metastore.commit_partition(
+        #     partition=test_partition,
+        #     catalog=self.catalog,
+        # )
 
         test_data = pd.DataFrame(
             {
@@ -8089,7 +8087,8 @@ class TestDistDeltaDaft:
 
         staged_delta = metastore.stage_delta(
             data=test_data,
-            partition=test_partition,
+            partition=self.partition,
+            # partition=test_partition,
             catalog=self.catalog,
             content_type=ContentType.PARQUET,
             delta_type=DeltaType.UPSERT,
