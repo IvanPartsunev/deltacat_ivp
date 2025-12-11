@@ -7934,7 +7934,6 @@ class TestDistDeltaDaft:
     @classmethod
     def teardown_method(cls):
         shutil.rmtree(cls.tmpdir)
-        ray.shutdown()
 
     def test_download_delta_distributed_daft_basic(self):
         """Test basic distributed download with DAFT dataset type."""
