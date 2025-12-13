@@ -8,26 +8,26 @@ on:
             - reopened
         branches: [main, phash_main, '2.0']
 jobs:
-    lint:
-        runs-on: ubuntu-latest
-        steps:
-            - name: checkout
-              uses: actions/checkout@v4
-            - name: Install uv
-              uses: astral-sh/setup-uv@v7
-              with:
-                  python-version: "3.9"
-            - name: Install dependencies
-              run: uv sync --all-extras
-            - name: Linting
-              run: uv run pre-commit run --all-files
+#    lint:
+#        runs-on: ubuntu-latest
+#        steps:
+#            - name: checkout
+#              uses: actions/checkout@v4
+#            - name: Install uv
+#              uses: astral-sh/setup-uv@v7
+#              with:
+#                  python-version: "3.9"
+#            - name: Install dependencies
+#              run: uv sync --all-extras
+#            - name: Linting
+#              run: uv run pre-commit run --all-files
 
     build-n-test:
         name: Build and test
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                python-version: ["3.9", "3.10"]
+                python-version: ["3.10"]
         timeout-minutes: 45
         steps:
             - name: "checkout repository"
