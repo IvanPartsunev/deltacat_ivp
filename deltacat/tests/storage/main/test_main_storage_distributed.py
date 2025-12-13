@@ -5,6 +5,7 @@ import uuid
 import pytest
 import pyarrow as pa
 import pandas as pd
+import ray
 
 from deltacat.exceptions import (
     SchemaValidationError,
@@ -32,6 +33,7 @@ from daft import DataFrame as DaftDataFrame
 class TestDeltaDistributed:
   @classmethod
   def setup_method(cls):
+    ray.shutdown()
     from daft.runners import flotilla
     flotilla.FLOTILLA_RUNNER_NAMESPACE = f'daft-job-{uuid.uuid4()}'
 
