@@ -162,7 +162,7 @@ class TestDaftFileToPyarrowTable(unittest.TestCase):
         self.assertEqual(table.num_rows, 10)
 
 
-@pytest.mark.integration
+@pytest.mark.distributed
 class TestFilesToDataFrame(unittest.TestCase):
     MVP_PATH = "deltacat/tests/utils/data/mvp.parquet"
 
