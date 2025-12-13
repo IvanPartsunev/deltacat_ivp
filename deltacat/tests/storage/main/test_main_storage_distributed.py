@@ -3,96 +3,38 @@ import tempfile
 import uuid
 
 import pytest
-import copy
 import pyarrow as pa
 import pandas as pd
-import polars as pl
-import numpy as np
-import ray
-import ray.data
 
-from deltacat import PartitionKey, PartitionScheme
 from deltacat.exceptions import (
     SchemaValidationError,
-    TableNotFoundError,
-    UnclassifiedDeltaCatError,
-    NamespaceNotFoundError,
-    NamespaceAlreadyExistsError,
-    TableAlreadyExistsError,
-    TableVersionNotFoundError,
-    TableVersionAlreadyExistsError,
-    TableValidationError,
-    StreamNotFoundError,
-    PartitionNotFoundError,
 )
 from deltacat.storage import (
     metastore,
-    CommitState,
-    IdentityTransform,
     LifecycleState,
-    Metafile,
-    Namespace,
-    NamespaceLocator,
-    Partition,
-    PartitionLocator,
-    TableVersion,
-    TableVersionLocator,
     Schema,
-    SortKey,
-    SortScheme,
-    StreamFormat,
-    StreamLocator,
-    SortOrder,
-    NullOrder,
-    BucketTransform,
-    BucketTransformParameters,
-    BucketingStrategy,
-    YearTransform,
-    MonthTransform,
-    DayTransform,
-    HourTransform,
-    TruncateTransform,
-    TruncateTransformParameters,
-    VoidTransform,
     DeltaType,
 )
 from deltacat.types.media import (
     ContentType,
-    ContentEncoding,
     DatasetType,
     StorageType,
     DistributedDatasetType,
 )
-from deltacat.storage.model.partition import (
-    UNPARTITIONED_SCHEME,
-    UNPARTITIONED_SCHEME_ID,
-    UNPARTITIONED_SCHEME_NAME,
-    PartitionKeyList,
-)
-from deltacat.storage.model.sort_key import (
-    UNSORTED_SCHEME,
-    UNSORTED_SCHEME_ID,
-    UNSORTED_SCHEME_NAME,
-    SortKeyList,
-)
-from deltacat.storage.model.manifest import ManifestAuthor
+
 from deltacat.tests.test_utils.storage import (
     create_test_namespace,
-    create_test_table,
-    create_test_table_version,
 )
 from deltacat.catalog import CatalogProperties
-
-from deltacat.storage.main.impl import DEFAULT_TABLE_VERSION
-
-# Add imports for type checking near the top of the file (after the existing imports)
-from ray.data.dataset import Dataset as RayDataset
 from daft import DataFrame as DaftDataFrame
 
 
 class TestDeltaDistributed:
   @classmethod
   def setup_method(cls):
+    from daft.runners import flotilla
+    flotilla.FLOTILLA_RUNNER_NAMESPACE = f'daft-job-{uuid.uuid4()}'
+
     cls.tmpdir = tempfile.mkdtemp()
     cls.catalog = CatalogProperties(root=cls.tmpdir)
 

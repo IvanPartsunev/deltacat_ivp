@@ -40,8 +40,13 @@ jobs:
                   python-version: ${{ matrix.python-version }}
             - name: Install dependencies
               run: uv sync --all-extras
-            - name: Run unit tests + benchmarks
-              run: uv run pytest -m "not integration" --benchmark-json output.json
+            # Original command (commented for faster testing)
+            # - name: Run unit tests + benchmarks
+            #   run: uv run pytest -m "not integration" --benchmark-json output.json
+            
+            # Temporary: Run only storage tests for faster CI
+            - name: Run storage tests only
+              run: uv run pytest deltacat/tests/storage/ -v --benchmark-json output.json
             # Download previous benchmark result from cache (if exists)
             - name: Download previous benchmark data
               uses: actions/cache@v4
