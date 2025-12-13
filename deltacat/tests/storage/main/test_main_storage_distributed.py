@@ -32,8 +32,8 @@ from daft import DataFrame as DaftDataFrame
 class TestDeltaDistributed:
   @classmethod
   def setup_method(cls):
-    # from daft.runners import flotilla
-    # flotilla.FLOTILLA_RUNNER_NAMESPACE = f'daft-job-{uuid.uuid4()}'
+    from daft.runners import flotilla
+    flotilla.FLOTILLA_RUNNER_NAMESPACE = f'daft-job-{uuid.uuid4()}'
 
     cls.tmpdir = tempfile.mkdtemp()
     cls.catalog = CatalogProperties(root=cls.tmpdir)
